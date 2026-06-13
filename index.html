@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#58cc02">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="轻松学英语">
+<title>轻松学英语 · Easy English</title>
+<style>
+  :root{
+    --green:#58cc02; --green-dark:#46a302;
+    --blue:#1cb0f6; --blue-dark:#1899d6;
+    --purple:#7d5fff; --gold:#ffc800;
+    --red:#ff4b4b; --bg:#f7f7fb; --card:#ffffff;
+    --ink:#3c3c44; --ink-soft:#8a8a96; --line:#e5e5ef;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  }
+  #topbar{
+    position:sticky; top:0; z-index:10; background:var(--card);
+    border-bottom:2px solid var(--line);
+    display:flex; align-items:center; gap:14px; padding:10px 16px;
+  }
+  #topbar .logo{font-weight:800; font-size:18px; color:var(--green); cursor:pointer;}
+  #topbar .stat{margin-left:auto; display:flex; gap:14px; font-weight:700; font-size:15px;}
+  #topbar .stat span{display:flex; align-items:center; gap:4px;}
+  #app{max-width:560px; margin:0 auto; padding:18px 16px 60px;}
+
+  .hint{color:var(--ink-soft); font-size:14px; margin:4px 0 16px;}
+  h1{font-size:22px; margin:6px 0 2px;}
+  h2{font-size:18px; margin:0 0 4px;}
+
+  /* ---- unit path ---- */
+  .unit-card{
+    background:var(--card); border:2px solid var(--line); border-radius:16px;
+    padding:14px 16px; margin-bottom:12px; display:flex; align-items:center;
+    gap:14px; cursor:pointer; transition:transform .1s;
+  }
+  .unit-card:active{transform:scale(.98);}
+  .unit-card.locked{opacity:.5; cursor:not-allowed;}
+  .unit-emoji{
+    width:52px; height:52px; border-radius:14px; background:#eef7e6;
+    display:flex; align-items:center; justify-content:center; font-size:26px; flex:none;
+  }
+  .unit-card.locked .unit-emoji{background:#ececf2;}
+  .unit-info{flex:1;}
+  .unit-info .zh{font-weight:800; font-size:16px;}
+  .unit-info .en{color:var(--ink-soft); font-size:13px;}
+  .stars{color:var(--gold); font-size:15px; letter-spacing:2px;}
+  .stars .off{color:#d8d8e2;}
+
+  .review-banner{
+    background:#fff4e0; border:2px solid #ffd98a; border-radius:16px;
+    padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px;
+  }
+  .review-banner button{margin-left:auto;}
+
+  /* ---- buttons ---- */
+  button{
+    font-family:inherit; font-weight:800; font-size:15px; border-radius:14px;
+    border:none; cursor:pointer; padding:12px 20px; color:#fff;
+    background:var(--green); box-shadow:0 4px 0 var(--green-dark);
+    transition:transform .05s;
+  }
+  button:active{transform:translateY(3px); box-shadow:0 1px 0 var(--green-dark);}
+  button.blue{background:var(--blue); box-shadow:0 4px 0 var(--blue-dark);}
+  button.blue:active{box-shadow:0 1px 0 var(--blue-dark);}
+  button.ghost{
+    background:var(--card); color:var(--ink-soft);
+    border:2px solid var(--line); box-shadow:0 4px 0 var(--line);
+  }
+  button.ghost:active{box-shadow:0 1px 0 var(--line);}
+  button.small{padding:8px 14px; font-size:13px; border-radius:10px;}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* ---- step tabs ---- */
+  .steps{display:flex; gap:8px; margin:14px 0 18px;}
+  .step{
+    flex:1; text-align:center; padding:8px 4px; border-radius:12px;
+    background:var(--card); border:2px solid var(--line);
+    font-size:13px; font-weight:700; color:var(--ink-soft);
+  }
+  .step.active{border-color:var(--green); color:var(--green);}
+  .step.done{background:#eef7e6; border-color:#bfe39e; color:var(--green-dark);}
+
+  /* ---- flashcard ---- */
+  .flash{
+    background:var(--card); border:2px solid var(--line); border-radius:20px;
+    min-height:260px; padding:24px; text-align:center; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    user-select:none;
+  }
+  .flash .big{font-size:46px;}
+  .flash .word{font-size:30px; font-weight:800;}
+  .flash .zh{font-size:22px; color:var(--purple); font-weight:700;}
+  .flash .ex{font-size:15px; color:var(--ink-soft); line-height:1.6;}
+  .flash .tap{font-size:12px; color:#c0c0cc; margin-top:8px;}
+  .flash-nav{display:flex; align-items:center; gap:10px; margin-top:14px;}
+  .flash-nav .count{flex:1; text-align:center; color:var(--ink-soft); font-weight:700;}
+
+  .rule-card{
+    background:var(--card); border:2px solid var(--line); border-radius:20px;
+    padding:22px; line-height:1.8;
+  }
+  .rule-card h3{margin:0 0 8px; color:var(--purple);}
+  .rule-card .eg{background:#f3f0ff; border-radius:10px; padding:8px 12px; margin:6px 0; font-size:15px;}
+  .rule-card .eg b{color:var(--purple);}
+
+  /* ---- quiz ---- */
+  .progress{height:14px; background:#e8e8f0; border-radius:8px; overflow:hidden; margin-bottom:18px;}
+  .progress > div{height:100%; background:var(--green); border-radius:8px; transition:width .3s;}
+  .qbox{
+    background:var(--card); border:2px solid var(--line); border-radius:20px;
+    padding:22px; margin-bottom:14px;
+  }
+  .qbox .qtext{font-size:19px; font-weight:800; line-height:1.5;}
+  .qbox .qsub{color:var(--ink-soft); font-size:14px; margin-top:4px;}
+  .opt{
+    display:block; width:100%; text-align:left; margin-top:10px;
+    background:var(--card); color:var(--ink); border:2px solid var(--line);
+    box-shadow:0 4px 0 var(--line); font-size:16px; font-weight:700;
+  }
+  .opt.correct{background:#e3f6d3; border-color:var(--green); box-shadow:0 4px 0 var(--green); color:var(--green-dark);}
+  .opt.wrong{background:#ffe3e3; border-color:var(--red); box-shadow:0 4px 0 var(--red); color:var(--red);}
+  input.typebox{
+    width:100%; margin-top:12px; padding:12px 14px; font-size:18px;
+    border:2px solid var(--line); border-radius:12px; font-family:inherit;
+  }
+  input.typebox:focus{outline:none; border-color:var(--blue);}
+  .feedback{
+    border-radius:14px; padding:12px 16px; margin-bottom:14px; font-weight:700;
+    display:none;
+  }
+  .feedback.good{display:block; background:#e3f6d3; color:var(--green-dark);}
+  .feedback.bad{display:block; background:#ffe3e3; color:var(--red);}
+  .speak-btn{
+    background:var(--blue); box-shadow:0 3px 0 var(--blue-dark);
+    border-radius:50%; width:44px; height:44px; padding:0; font-size:20px;
+  }
+
+  /* ---- result ---- */
+  .result{
+    text-align:center; background:var(--card); border:2px solid var(--line);
+    border-radius:20px; padding:34px 22px;
+  }
+  .result .big-stars{font-size:44px; letter-spacing:6px; color:var(--gold); margin:10px 0;}
+  .result .big-stars .off{color:#e0e0ea;}
+  .result .score{font-size:30px; font-weight:800; margin:6px 0;}
+  .result p{color:var(--ink-soft);}
+  .bounce{animation:pop .5s ease;}
+  @keyframes pop{0%{transform:scale(.3);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+
+  .footer-note{text-align:center; color:#b8b8c4; font-size:12px; margin-top:30px;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="logo" onclick="goHome()">🦉 轻松学英语</div>
+  <div class="stat">
+    <span title="连续学习天数">🔥 <b id="streak">0</b></span>
+    <span title="经验值">⭐ <b id="xp">0</b> XP</span>
+  </div>
+</div>
+
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   课程数据 Course data
+   ========================================================= */
+const UNITS = [
+  {
+    id:'greetings', emoji:'💬', zh:'问候与寒暄', en:'Greetings & Small Talk',
+    items:[
+      {w:'Nice to meet you', zh:'很高兴认识你', e:'Hello, nice to meet you!', ezh:'你好，很高兴认识你！', pic:'🤝'},
+      {w:'How is it going?', zh:'最近怎么样？', e:'Hi! How is it going?', ezh:'嗨！最近怎么样？', pic:'💬'},
+      {w:'Long time no see', zh:'好久不见', e:'Long time no see! You look great.', ezh:'好久不见！你气色很好。', pic:'👀'},
+      {w:'Where are you from?', zh:'你是哪里人？', e:'Where are you from? — I am from China.', ezh:'你是哪里人？— 我来自中国。', pic:'🌏'},
+      {w:'What do you do?', zh:'你做什么工作？', e:'What do you do? — I am a student.', ezh:'你做什么工作？— 我是学生。', pic:'💼'},
+      {w:'Let me introduce myself', zh:'我来自我介绍一下', e:'Let me introduce myself. I am Li Hua.', ezh:'我来自我介绍一下，我是李华。', pic:'🙋'},
+      {w:'This is my friend', zh:'这是我的朋友', e:'This is my friend, Wang Ming.', ezh:'这是我的朋友，王明。', pic:'👫'},
+      {w:'Nice to see you again', zh:'很高兴再次见到你', e:'Nice to see you again!', ezh:'很高兴再次见到你！', pic:'😊'},
+      {w:'Take care', zh:'保重', e:'Goodbye, take care!', ezh:'再见，保重！', pic:'🤗'},
+      {w:'Keep in touch', zh:'保持联系', e:'Keep in touch! Send me a message.', ezh:'保持联系！给我发消息。', pic:'📱'},
+    ]
+  },
+  {
+    id:'numbers', emoji:'🔢', zh:'数字与颜色', en:'Numbers & Colors',
+    items:[
+      {w:'twenty', zh:'二十', e:'I am twenty years old.', ezh:'我二十岁。', pic:'🔢'},
+      {w:'a hundred', zh:'一百', e:'This phone costs a hundred dollars.', ezh:'这部手机一百美元。', pic:'💯'},
+      {w:'first', zh:'第一', e:'She came first in the race.', ezh:'她在比赛中得了第一。', pic:'🥇'},
+      {w:'How many?', zh:'多少个？', e:'How many books do you have?', ezh:'你有多少本书？', pic:'❓'},
+      {w:'red', zh:'红色', e:'I like the red bag.', ezh:'我喜欢那个红色的包。', pic:'🔴'},
+      {w:'blue', zh:'蓝色', e:'The sky is blue.', ezh:'天空是蓝色的。', pic:'🔵'},
+      {w:'green', zh:'绿色', e:'The tree is green.', ezh:'树是绿色的。', pic:'🟢'},
+      {w:'yellow', zh:'黄色', e:'She has a yellow car.', ezh:'她有一辆黄色的车。', pic:'🟡'},
+      {w:'black', zh:'黑色', e:'My cat is black.', ezh:'我的猫是黑色的。', pic:'⚫'},
+      {w:'white', zh:'白色', e:'Snow is white.', ezh:'雪是白色的。', pic:'⚪'},
+    ]
+  },
+  {
+    id:'family', emoji:'👨‍👩‍👧', zh:'家庭与朋友', en:'Family & Friends',
+    items:[
+      {w:'father', zh:'爸爸', e:'My father is a doctor.', ezh:'我爸爸是医生。', pic:'👨'},
+      {w:'mother', zh:'妈妈', e:'My mother cooks well.', ezh:'我妈妈做饭很好吃。', pic:'👩'},
+      {w:'brother', zh:'兄弟', e:'My brother is tall.', ezh:'我哥哥很高。', pic:'👦'},
+      {w:'sister', zh:'姐妹', e:'My sister likes music.', ezh:'我妹妹喜欢音乐。', pic:'👧'},
+      {w:'family', zh:'家庭', e:'I love my family.', ezh:'我爱我的家庭。', pic:'🏠'},
+      {w:'friend', zh:'朋友', e:'He is my best friend.', ezh:'他是我最好的朋友。', pic:'🤗'},
+      {w:'son', zh:'儿子', e:'Their son is five years old.', ezh:'他们的儿子五岁了。', pic:'🧒'},
+      {w:'daughter', zh:'女儿', e:'Her daughter is a student.', ezh:'她的女儿是学生。', pic:'👶'},
+      {w:'grandfather', zh:'爷爷 / 外公', e:'My grandfather tells good stories.', ezh:'我爷爷讲故事很好听。', pic:'👴'},
+      {w:'grandmother', zh:'奶奶 / 外婆', e:'My grandmother makes dumplings.', ezh:'我奶奶包饺子。', pic:'👵'},
+    ]
+  },
+  {
+    id:'food', emoji:'🍜', zh:'食物与饮料', en:'Food & Drink',
+    items:[
+      {w:'apple', zh:'苹果', e:'I eat an apple every day.', ezh:'我每天吃一个苹果。', pic:'🍎'},
+      {w:'rice', zh:'米饭', e:'We eat rice for dinner.', ezh:'我们晚饭吃米饭。', pic:'🍚'},
+      {w:'water', zh:'水', e:'Drink more water.', ezh:'多喝水。', pic:'💧'},
+      {w:'tea', zh:'茶', e:'Chinese tea is famous.', ezh:'中国茶很有名。', pic:'🍵'},
+      {w:'milk', zh:'牛奶', e:'I drink milk in the morning.', ezh:'我早上喝牛奶。', pic:'🥛'},
+      {w:'bread', zh:'面包', e:'This bread is fresh.', ezh:'这面包很新鲜。', pic:'🍞'},
+      {w:'egg', zh:'鸡蛋', e:'I want two eggs, please.', ezh:'请给我两个鸡蛋。', pic:'🥚'},
+      {w:'fish', zh:'鱼', e:'The fish is delicious.', ezh:'这鱼很好吃。', pic:'🐟'},
+      {w:'noodles', zh:'面条', e:'Beef noodles are my favorite.', ezh:'牛肉面是我的最爱。', pic:'🍜'},
+      {w:'fruit', zh:'水果', e:'Fruit is good for you.', ezh:'水果对你有好处。', pic:'🍇'},
+    ]
+  },
+  {
+    id:'verbs', emoji:'🏃', zh:'日常动词', en:'Daily Verbs',
+    items:[
+      {w:'eat', zh:'吃', e:'I eat breakfast at seven.', ezh:'我七点吃早饭。', pic:'🍽️'},
+      {w:'drink', zh:'喝', e:'She drinks coffee.', ezh:'她喝咖啡。', pic:'🥤'},
+      {w:'sleep', zh:'睡觉', e:'I sleep eight hours.', ezh:'我睡八个小时。', pic:'😴'},
+      {w:'go', zh:'去', e:'I go to school by bus.', ezh:'我坐公交车去学校。', pic:'🚌'},
+      {w:'come', zh:'来', e:'Please come here.', ezh:'请过来。', pic:'👉'},
+      {w:'read', zh:'读 / 看(书)', e:'I read books at night.', ezh:'我晚上看书。', pic:'📖'},
+      {w:'write', zh:'写', e:'Write your name here.', ezh:'把你的名字写在这里。', pic:'✍️'},
+      {w:'speak', zh:'说(语言)', e:'I speak a little English.', ezh:'我会说一点英语。', pic:'🗣️'},
+      {w:'listen', zh:'听', e:'Listen to the teacher.', ezh:'听老师讲。', pic:'👂'},
+      {w:'work', zh:'工作', e:'My mother works in a bank.', ezh:'我妈妈在银行工作。', pic:'💼'},
+    ]
+  },
+  {
+    id:'be', emoji:'📘', zh:'语法：be 动词', en:'Grammar: am / is / are',
+    rules:[
+      {t:'什么是 be 动词？', body:'be 动词表示"是"，有三种形式：<b>am / is / are</b>。中文说"我是学生"，英文说 "I <b>am</b> a student."',
+       egs:['I <b>am</b> happy. 我很开心。','She <b>is</b> a teacher. 她是老师。','They <b>are</b> friends. 他们是朋友。']},
+      {t:'怎么选 am / is / are？', body:'记住口诀：<b>我用 am，你用 are，is 用于他她它；复数全部都用 are。</b>',
+       egs:['I → <b>am</b>','you / we / they → <b>are</b>','he / she / it → <b>is</b>']},
+      {t:'否定与提问', body:'否定：在 be 后面加 <b>not</b>。提问：把 be 放到句子最前面。',
+       egs:['I am <b>not</b> tired. 我不累。','<b>Is</b> she your sister? 她是你姐姐吗？','<b>Are</b> you a student? 你是学生吗？']},
+    ],
+    questions:[
+      {q:'I ___ a student.', zh:'我是一名学生。', opts:['am','is','are'], a:0},
+      {q:'She ___ my teacher.', zh:'她是我的老师。', opts:['am','is','are'], a:1},
+      {q:'They ___ good friends.', zh:'他们是好朋友。', opts:['is','are','am'], a:1},
+      {q:'He ___ very tall.', zh:'他很高。', opts:['are','am','is'], a:2},
+      {q:'You ___ welcome.', zh:'不客气。', opts:['are','is','am'], a:0},
+      {q:'It ___ a black cat.', zh:'它是一只黑猫。', opts:['are','is','am'], a:1},
+      {q:'We ___ happy today.', zh:'我们今天很开心。', opts:['is','am','are'], a:2},
+      {q:'My father ___ a doctor.', zh:'我爸爸是医生。', opts:['is','are','am'], a:0},
+      {q:'I ___ not tired.', zh:'我不累。', opts:['is','am','are'], a:1},
+      {q:'___ you a student?', zh:'你是学生吗？', opts:['Is','Am','Are'], a:2},
+    ]
+  },
+  {
+    id:'present', emoji:'📗', zh:'语法：一般现在时', en:'Grammar: Present Simple',
+    rules:[
+      {t:'什么时候用？', body:'一般现在时表示<b>经常做的事</b>或<b>事实</b>。比如"我每天喝茶"、"太阳从东边升起"。',
+       egs:['I <b>drink</b> tea every day. 我每天喝茶。','The sun <b>rises</b> in the east. 太阳从东边升起。']},
+      {t:'第三人称单数要加 s', body:'主语是 <b>he / she / it</b> 或一个人名时，动词后面要加 <b>s</b>（或 es）。这是中国学生最容易忘的一点！',
+       egs:['I eat rice. → She eat<b>s</b> rice.','He go<b>es</b> to work by bike. 他骑车上班。']},
+      {t:'否定与提问用 do / does', body:'否定：<b>don\'t / doesn\'t</b> + 动词原形。提问：<b>Do / Does</b> 放句首，动词变回原形。',
+       egs:['I <b>don\'t</b> like coffee. 我不喜欢咖啡。','She <b>doesn\'t</b> eat fish. 她不吃鱼。','<b>Does</b> he speak English? 他会说英语吗？']},
+    ],
+    questions:[
+      {q:'I ___ tea every morning.', zh:'我每天早上喝茶。', opts:['drink','drinks','drinking'], a:0},
+      {q:'She ___ to school by bus.', zh:'她坐公交车上学。', opts:['go','goes','going'], a:1},
+      {q:'He ___ English very well.', zh:'他英语说得很好。', opts:['speak','speaking','speaks'], a:2},
+      {q:'We ___ rice for dinner.', zh:'我们晚饭吃米饭。', opts:['eats','eat','eating'], a:1},
+      {q:'My mother ___ in a bank.', zh:'我妈妈在银行工作。', opts:['works','work','working'], a:0},
+      {q:'I ___ like coffee.', zh:'我不喜欢咖啡。', opts:['doesn\'t','not','don\'t'], a:2},
+      {q:'She ___ eat fish.', zh:'她不吃鱼。', opts:['doesn\'t','don\'t','isn\'t'], a:0},
+      {q:'___ he speak Chinese?', zh:'他会说中文吗？', opts:['Do','Does','Is'], a:1},
+      {q:'They ___ books at night.', zh:'他们晚上看书。', opts:['reads','reading','read'], a:2},
+      {q:'My sister ___ music.', zh:'我妹妹喜欢音乐。', opts:['likes','like','liking'], a:0},
+    ]
+  },
+  {
+    id:'phrases', emoji:'💬', zh:'实用句子', en:'Useful Sentences',
+    items:[
+      {w:'How much is it?', zh:'多少钱？', e:'How much is it? — Ten yuan.', ezh:'多少钱？— 十元。', pic:'💰'},
+      {w:'Where is the bathroom?', zh:'洗手间在哪里？', e:'Excuse me, where is the bathroom?', ezh:'请问，洗手间在哪里？', pic:'🚻'},
+      {w:'I don\'t understand.', zh:'我不明白。', e:'Sorry, I don\'t understand.', ezh:'对不起，我不明白。', pic:'😕'},
+      {w:'Can you help me?', zh:'你能帮我吗？', e:'Excuse me, can you help me?', ezh:'打扰一下，你能帮我吗？', pic:'🆘'},
+      {w:'Please say it again.', zh:'请再说一遍。', e:'Please say it again, slowly.', ezh:'请再说一遍，慢一点。', pic:'🔁'},
+      {w:'What time is it?', zh:'现在几点了？', e:'What time is it? — It is nine.', ezh:'现在几点了？— 九点。', pic:'⏰'},
+      {w:'I am from China.', zh:'我来自中国。', e:'I am from China. And you?', ezh:'我来自中国。你呢？', pic:'🇨🇳'},
+      {w:'See you later.', zh:'回头见。', e:'I have to go. See you later!', ezh:'我得走了。回头见！', pic:'👋'},
+      {w:'No problem.', zh:'没问题。', e:'Can you wait? — No problem.', ezh:'你能等一下吗？— 没问题。', pic:'👌'},
+      {w:'Have a nice day!', zh:'祝你今天愉快！', e:'Goodbye! Have a nice day!', ezh:'再见！祝你今天愉快！', pic:'🌞'},
+    ]
+  },
+];
+
+/* =========================================================
+   进度存储 State & storage
+   ========================================================= */
+const KEY = 'easy_english_v1';
+let S = load() || { xp:0, streak:0, lastDay:'', units:{}, review:[] };
+UNITS.forEach(u => { if(!S.units[u.id]) S.units[u.id] = {stars:0, learned:false, practiced:false, best:0}; });
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function addXP(n){
+  const t = today();
+  if(S.lastDay !== t){
+    const y = new Date(); y.setDate(y.getDate()-1);
+    S.streak = (S.lastDay === y.toISOString().slice(0,10)) ? S.streak+1 : 1;
+    S.lastDay = t;
+  }
+  S.xp += n; save(); renderTop();
+}
+function renderTop(){
+  document.getElementById('xp').textContent = S.xp;
+  document.getElementById('streak').textContent = S.streak;
+}
+
+/* =========================================================
+   工具 Helpers
+   ========================================================= */
+const app = document.getElementById('app');
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.85;
+    const v = speechSynthesis.getVoices().find(v => v.lang.startsWith('en'));
+    if(v) u.voice = v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+if('speechSynthesis' in window) speechSynthesis.getVoices(); // 预加载语音
+function starsHtml(n, cls){
+  let h = '';
+  for(let i=1;i<=3;i++) h += `<span class="${i<=n?'':'off'}">★</span>`;
+  return `<span class="${cls||'stars'}">${h}</span>`;
+}
+function unitIndex(id){ return UNITS.findIndex(u => u.id === id); }
+function isUnlocked(i){ return i === 0 || S.units[UNITS[i-1].id].stars >= 2; }
+function normalize(s){ return s.toLowerCase().replace(/[.,!?'’]/g,'').replace(/\s+/g,' ').trim(); }
+
+/* =========================================================
+   主页 Home — 学习路径
+   ========================================================= */
+function dismissA2hs(){ S.a2hs = true; save(); goHome(); }
+
+function goHome(){
+  speechSynthesis.cancel();
+  let h = `<h1>学习路径 📍</h1>
+    <div class="hint">每一关：先<b>学习</b>新词 → 再<b>练习</b> → 最后<b>测验</b>。测验拿到 ★★（70 分以上）就能解锁下一关！</div>`;
+
+  if(!S.a2hs){
+    h += `<div class="review-banner">💡 想以后<b>一键打开</b>？在浏览器菜单里点「<b>添加到主屏幕 / 添加到桌面</b>」，就会变成手机上的 App 图标！<br>
+          <span style="font-size:12px;color:var(--ink-soft)">苹果手机：Safari 里点分享 ⬆️ → 添加到主屏幕</span>
+          <button class="small" onclick="dismissA2hs()">知道了</button></div>`;
+  }
+  if(S.review.length > 0){
+    h += `<div class="review-banner">📒 <b>错题本</b>有 <b>${S.review.length}</b> 个词要复习
+          <button class="small" onclick="startReview()">去复习</button></div>`;
+  }
+
+  UNITS.forEach((u, i) => {
+    const st = S.units[u.id];
+    const locked = !isUnlocked(i);
+    h += `<div class="unit-card ${locked?'locked':''}" ${locked?'':`onclick="openUnit('${u.id}')"`}>
+        <div class="unit-emoji">${locked?'🔒':u.emoji}</div>
+        <div class="unit-info">
+          <div class="zh">第 ${i+1} 关 · ${u.zh}</div>
+          <div class="en">${u.en} · ${(u.items||u.questions).length} 个内容</div>
+        </div>
+        ${starsHtml(st.stars)}
+      </div>`;
+  });
+  h += `<div class="footer-note">进度自动保存在本电脑 · 点喇叭 🔊 可以听发音</div>`;
+  app.innerHTML = h;
+}
+
+/* =========================================================
+   单元页 Unit — 学习 / 练习 / 测验
+   ========================================================= */
+let cur = null; // 当前单元状态
+
+function openUnit(id){
+  const u = UNITS[unitIndex(id)];
+  cur = { unit:u, card:0, flipped:false };
+  renderLearn();
+}
+
+function stepsHtml(active){
+  const st = S.units[cur.unit.id];
+  const steps = [
+    {k:'learn', zh:'① 学习', done: st.learned},
+    {k:'practice', zh:'② 练习', done: st.practiced},
+    {k:'quiz', zh:'③ 测验', done: st.stars > 0},
+  ];
+  return `<div class="steps">` + steps.map(s =>
+    `<div class="step ${s.k===active?'active':(s.done?'done':'')}">${s.zh}${s.done?' ✓':''}</div>`).join('') + `</div>`;
+}
+
+function unitHeader(){
+  const u = cur.unit;
+  return `<button class="ghost small" onclick="goHome()">← 返回</button>
+    <h1 style="margin-top:14px">${u.emoji} ${u.zh} <span style="color:var(--ink-soft);font-size:15px">${u.en}</span></h1>`;
+}
+
+/* ---------- ① 学习（翻卡片） ---------- */
+function renderLearn(){
+  const u = cur.unit;
+  const isGrammar = !!u.rules;
+  const cards = isGrammar ? u.rules : u.items;
+  const i = cur.card, c = cards[i];
+
+  let cardHtml;
+  if(isGrammar){
+    cardHtml = `<div class="rule-card">
+        <h3>${c.t}</h3>
+        <div>${c.body}</div>
+        ${c.egs.map(e => `<div class="eg">${e}</div>`).join('')}
+      </div>`;
+  } else {
+    cardHtml = `<div class="flash" onclick="flipCard()">
+        <div class="big">${c.pic}</div>
+        <div class="word">${esc(c.w)}</div>
+        ${cur.flipped ? `
+          <div class="zh">${esc(c.zh)}</div>
+          <div class="ex">${esc(c.e)}<br>${esc(c.ezh)}</div>` : `
+          <div class="tap">👆 点卡片看中文意思</div>`}
+      </div>`;
+  }
+
+  app.innerHTML = unitHeader() + stepsHtml('learn') + `
+    <div class="hint">${isGrammar ? '看懂每张语法卡片，再去练习。' : '先听发音，点卡片看意思。学完所有卡片再去练习。'}</div>
+    ${cardHtml}
+    <div class="flash-nav">
+      <button class="ghost" onclick="moveCard(-1)" ${i===0?'disabled':''}>← 上一个</button>
+      ${isGrammar ? '' : `<button class="speak-btn" onclick="event.stopPropagation();speak('${c.w.replace(/'/g,"\\'")}')" title="听发音">🔊</button>`}
+      <div class="count">${i+1} / ${cards.length}</div>
+      ${i < cards.length-1
+        ? `<button onclick="moveCard(1)">下一个 →</button>`
+        : `<button class="blue" onclick="finishLearn()">去练习 →</button>`}
+    </div>`;
+  if(!isGrammar) speak(c.w);
+}
+function flipCard(){ cur.flipped = !cur.flipped; renderLearn(); }
+function moveCard(d){ cur.card += d; cur.flipped = false; renderLearn(); }
+function finishLearn(){
+  S.units[cur.unit.id].learned = true; save();
+  startSession('practice');
+}
+
+/* =========================================================
+   ② 练习 与 ③ 测验（共用题目引擎）
+   ========================================================= */
+function makeVocabQuestions(unit, n, withTyping){
+  const idxs = shuffle(unit.items.map((_, i) => i));
+  const qs = [];
+  for(let k = 0; k < n; k++){
+    const ii = idxs[k % idxs.length];
+    const it = unit.items[ii];
+    const others = shuffle(unit.items.filter((_, j) => j !== ii)).slice(0, 3);
+    const mode = withTyping && (k % 4 === 3) ? 'type' : (k % 2 === 0 ? 'en2zh' : 'zh2en');
+    if(mode === 'type'){
+      qs.push({type:'type', prompt:`请用英语写出：<b>${esc(it.zh)}</b> ${it.pic}`, sub:'输入英文，大小写不限', answer:it.w, sayText:null, item:{u:unit.id, i:ii}});
+    } else if(mode === 'en2zh'){
+      const opts = shuffle([{t:it.zh, ok:true}, ...others.map(o => ({t:o.zh, ok:false}))]);
+      qs.push({type:'mcq', prompt:`“<b>${esc(it.w)}</b>” 是什么意思？`, sub:'选择正确的中文意思', opts, sayText:it.w, item:{u:unit.id, i:ii}});
+    } else {
+      const opts = shuffle([{t:it.w, ok:true}, ...others.map(o => ({t:o.w, ok:false}))]);
+      qs.push({type:'mcq', prompt:`「${esc(it.zh)}」${it.pic} 用英语怎么说？`, sub:'选择正确的英文', opts, sayText:null, item:{u:unit.id, i:ii}});
+    }
+  }
+  return qs;
+}
+function makeGrammarQuestions(unit, n){
+  return shuffle(unit.questions).slice(0, n).map(g => ({
+    type:'mcq',
+    prompt: esc(g.q).replace('___','<u>　　</u>'),
+    sub: g.zh,
+    opts: shuffle(g.opts.map((t, i) => ({t, ok: i === g.a}))),
+    sayText:null, item:null
+  }));
+}
+
+let sess = null;
+function startSession(kind){
+  const u = cur.unit;
+  const n = kind === 'quiz' ? 10 : 8;
+  const qs = u.rules ? makeGrammarQuestions(u, n)
+                     : makeVocabQuestions(u, n, kind === 'quiz');
+  sess = {kind, qs, i:0, right:0, answered:false};
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q = sess.qs[sess.i];
+  const pct = Math.round(sess.i / sess.qs.length * 100);
+  let body;
+  if(q.type === 'mcq'){
+    body = q.opts.map((o, j) =>
+      `<button class="opt" id="opt${j}" onclick="answerMcq(${j})">${esc(o.t)}</button>`).join('');
+  } else {
+    body = `<input class="typebox" id="typebox" autocomplete="off" placeholder="在这里输入英文..."
+              onkeydown="if(event.key==='Enter')answerType()">
+            <div style="margin-top:12px;text-align:right">
+              <button onclick="answerType()">检查 ✓</button></div>`;
+  }
+  app.innerHTML = unitHeader() + stepsHtml(sess.kind) + `
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="qbox">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div class="qtext">${q.prompt}</div>
+          <div class="qsub">${esc(q.sub||'')}</div>
+        </div>
+        ${q.sayText ? `<button class="speak-btn" onclick="speak('${q.sayText.replace(/'/g,"\\'")}')">🔊</button>` : ''}
+      </div>
+      ${body}
+    </div>
+    <div class="feedback" id="fb"></div>
+    <div style="text-align:right">
+      <button class="blue" id="nextBtn" style="display:none" onclick="nextQuestion()">继续 →</button>
+    </div>`;
+  if(q.sayText) speak(q.sayText);
+  const tb = document.getElementById('typebox'); if(tb) tb.focus();
+}
+
+function showFeedback(ok, correctText){
+  const fb = document.getElementById('fb');
+  if(ok){
+    fb.className = 'feedback good';
+    fb.innerHTML = `✅ 太棒了！+10 XP`;
+    addXP(10);
+  } else {
+    fb.className = 'feedback bad';
+    fb.innerHTML = `❌ 正确答案是：<b>${esc(correctText)}</b>　已加入错题本 📒`;
+  }
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function recordWrong(q){
+  if(!q.item) return;
+  if(!S.review.some(r => r.u === q.item.u && r.i === q.item.i)){
+    S.review.push(q.item); save();
+  }
+}
+
+function answerMcq(j){
+  if(sess.answered) return;
+  sess.answered = true;
+  const q = sess.qs[sess.i];
+  const correct = q.opts.findIndex(o => o.ok);
+  document.getElementById('opt'+correct).classList.add('correct');
+  if(j === correct){
+    sess.right++;
+    showFeedback(true);
+  } else {
+    document.getElementById('opt'+j).classList.add('wrong');
+    recordWrong(q);
+    showFeedback(false, q.opts[correct].t);
+  }
+  if(q.sayText === null && q.item){ // 中→英题，答完读出正确英文
+    const it = UNITS[unitIndex(q.item.u)].items[q.item.i];
+    speak(it.w);
+  }
+}
+
+function answerType(){
+  if(sess.answered) return;
+  const q = sess.qs[sess.i];
+  const val = document.getElementById('typebox').value;
+  if(!val.trim()) return;
+  sess.answered = true;
+  const ok = normalize(val) === normalize(q.answer);
+  if(ok){ sess.right++; showFeedback(true); }
+  else { recordWrong(q); showFeedback(false, q.answer); }
+  speak(q.answer);
+}
+
+function nextQuestion(){
+  sess.i++; sess.answered = false;
+  if(sess.i < sess.qs.length){ renderQuestion(); }
+  else if(sess.kind === 'practice'){ finishPractice(); }
+  else if(sess.kind === 'quiz'){ finishQuiz(); }
+  else { finishReview(); }
+}
+
+/* ---------- 练习结束 ---------- */
+function finishPractice(){
+  const score = Math.round(sess.right / sess.qs.length * 100);
+  S.units[cur.unit.id].practiced = true; save();
+  app.innerHTML = unitHeader() + stepsHtml('practice') + `
+    <div class="result bounce">
+      <div style="font-size:50px">${score >= 70 ? '🎉' : '💪'}</div>
+      <div class="score">练习完成：${sess.right} / ${sess.qs.length}</div>
+      <p>${score >= 70 ? '学得不错！现在去测验，赢取星星吧！' : '再多练几次会更熟练，也可以直接挑战测验。'}</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        <button class="ghost" onclick="startSession('practice')">再练一次</button>
+        <button onclick="startSession('quiz')">开始测验 →</button>
+      </div>
+    </div>`;
+}
+
+/* ---------- 测验结束 ---------- */
+function finishQuiz(){
+  const total = sess.qs.length;
+  const score = Math.round(sess.right / total * 100);
+  const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
+  const st = S.units[cur.unit.id];
+  if(stars > st.stars) st.stars = stars;
+  if(score > st.best) st.best = score;
+  if(stars >= 2) addXP(30); // 通关奖励
+  save();
+
+  const idx = unitIndex(cur.unit.id);
+  const next = UNITS[idx+1];
+  const passed = stars >= 2;
+  app.innerHTML = unitHeader() + stepsHtml('quiz') + `
+    <div class="result bounce">
+      <div style="font-size:50px">${passed ? '🏆' : '🌱'}</div>
+      <div class="big-stars">${'★'.repeat(stars)}<span class="off">${'★'.repeat(3-stars)}</span></div>
+      <div class="score">${score} 分（答对 ${sess.right} / ${total}）</div>
+      <p>${passed
+          ? (next ? `恭喜通关！已解锁下一关：<b>${next.zh}</b> 🎁 +30 XP` : '恭喜你完成了全部课程！🎓 +30 XP')
+          : '差一点点！拿到 ★★（70 分）就能解锁下一关。先看看错题本，再来一次！'}</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+        <button class="ghost" onclick="startSession('quiz')">再测一次</button>
+        ${S.review.length ? `<button class="blue" onclick="startReview()">复习错题 (${S.review.length})</button>` : ''}
+        ${passed && next ? `<button onclick="openUnit('${next.id}')">下一关 →</button>` : `<button onclick="goHome()">回到地图</button>`}
+      </div>
+    </div>`;
+}
+
+/* =========================================================
+   错题复习 Review
+   ========================================================= */
+function startReview(){
+  if(!S.review.length){ goHome(); return; }
+  const qs = shuffle(S.review).slice(0, 10).map(r => {
+    const unit = UNITS[unitIndex(r.u)];
+    const it = unit.items[r.i];
+    const others = shuffle(unit.items.filter((_, j) => j !== r.i)).slice(0, 3);
+    const en2zh = Math.random() < 0.5;
+    return en2zh
+      ? {type:'mcq', prompt:`“<b>${esc(it.w)}</b>” 是什么意思？`, sub:'错题复习', opts:shuffle([{t:it.zh,ok:true},...others.map(o=>({t:o.zh,ok:false}))]), sayText:it.w, item:r, review:true}
+      : {type:'mcq', prompt:`「${esc(it.zh)}」${it.pic} 用英语怎么说？`, sub:'错题复习', opts:shuffle([{t:it.w,ok:true},...others.map(o=>({t:o.w,ok:false}))]), sayText:null, item:r, review:true};
+  });
+  cur = cur || {unit:UNITS[0]};
+  sess = {kind:'review', qs, i:0, right:0, answered:false, cleared:[]};
+  renderReviewQuestion();
+}
+
+function renderReviewQuestion(){
+  const q = sess.qs[sess.i];
+  const pct = Math.round(sess.i / sess.qs.length * 100);
+  app.innerHTML = `<button class="ghost small" onclick="goHome()">← 返回</button>
+    <h1 style="margin-top:14px">📒 错题复习</h1>
+    <div class="hint">答对了，这个词就从错题本里消掉！</div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="qbox">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="flex:1">
+          <div class="qtext">${q.prompt}</div>
+          <div class="qsub">${esc(q.sub)}</div>
+        </div>
+        ${q.sayText ? `<button class="speak-btn" onclick="speak('${q.sayText.replace(/'/g,"\\'")}')">🔊</button>` : ''}
+      </div>
+      ${q.opts.map((o, j) => `<button class="opt" id="opt${j}" onclick="answerReview(${j})">${esc(o.t)}</button>`).join('')}
+    </div>
+    <div class="feedback" id="fb"></div>
+    <div style="text-align:right">
+      <button class="blue" id="nextBtn" style="display:none" onclick="nextReview()">继续 →</button>
+    </div>`;
+  if(q.sayText) speak(q.sayText);
+}
+
+function answerReview(j){
+  if(sess.answered) return;
+  sess.answered = true;
+  const q = sess.qs[sess.i];
+  const correct = q.opts.findIndex(o => o.ok);
+  document.getElementById('opt'+correct).classList.add('correct');
+  if(j === correct){
+    sess.right++;
+    sess.cleared.push(q.item);
+    showFeedback(true);
+  } else {
+    document.getElementById('opt'+j).classList.add('wrong');
+    showFeedback(false, q.opts[correct].t);
+  }
+  const it = UNITS[unitIndex(q.item.u)].items[q.item.i];
+  speak(it.w);
+}
+
+function nextReview(){
+  sess.i++; sess.answered = false;
+  if(sess.i < sess.qs.length){ renderReviewQuestion(); }
+  else { finishReview(); }
+}
+
+function finishReview(){
+  // 答对的词移出错题本
+  S.review = S.review.filter(r => !sess.cleared.some(c => c.u === r.u && c.i === r.i));
+  save();
+  app.innerHTML = `
+    <div class="result bounce" style="margin-top:20px">
+      <div style="font-size:50px">${S.review.length === 0 ? '✨' : '📒'}</div>
+      <div class="score">答对 ${sess.right} / ${sess.qs.length}</div>
+      <p>${S.review.length === 0 ? '错题本清空了，真厉害！' : `错题本还剩 ${S.review.length} 个词。`}</p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+        ${S.review.length ? `<button class="blue" onclick="startReview()">继续复习</button>` : ''}
+        <button onclick="goHome()">回到地图</button>
+      </div>
+    </div>`;
+}
+
+/* ========================================================= */
+renderTop();
+goHome();
+</script>
+</body>
+</html>
